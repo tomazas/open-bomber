@@ -1,20 +1,12 @@
+// ------------------------------------------------------------------
+// Open-bomber - open-source online bomberman remake
+// ------------------------------------------------------------------
+
 #include "network.h"
 #include <string>
 #include <vector>
-//#include <Windows.h>
-//#include "game.h"
 
-//-----------------------------------------------------------------------------
 
-//extern Dude player;
-//extern Dude enemy;
-//
-//extern bool playerDead;
-//extern bool enemyDead;
-//extern bool bSendRestart;
-
-//extern char map[MAP_Y*MAP_X];
-//extern std::vector<TBomb> bombs;
 
 //-----------------------------------------------------------------------------
 DWORD Network::ping = 0;
@@ -45,6 +37,16 @@ Network::~Network()
 {
 
 }
+//-----------------------------------------------------------------------------
+bool Network::IsServerStarted(){ return serverStarted; }
+//-----------------------------------------------------------------------------
+bool Network::IsClient(){ return isClient; }
+//-----------------------------------------------------------------------------
+bool Network::IsConnected(){ return isConnected; }
+//-----------------------------------------------------------------------------
+std::string Network::GetStatus(){ return net_status; }
+//-----------------------------------------------------------------------------
+DWORD Network::GetPing(){ return ping; }
 //-----------------------------------------------------------------------------
 void Network::SendData(const char* func, char* data, int size, SystemAddress addr)
 {
@@ -294,14 +296,10 @@ void Network::UpdateNetBombs()
 	}
 }
 
-
-//-----------------------------------------------------------------------------
-
-
 //-----------------------------------------------------------------------------
 void UpdateWithNewBomb(TBomb b)
 {
-	if(game->IsBombPlanted(b.x, b.y) == false)
+	if(game->IsBombPlanted(b.cellx, b.celly) == false)
 	{
 		b.owner = BOMB_ENEMY;
 		game->AddNewBomb(b);

@@ -1,3 +1,7 @@
+// ------------------------------------------------------------------
+// Open-bomber - open-source online bomberman remake
+// ------------------------------------------------------------------
+
 #pragma once
 
 
@@ -59,12 +63,12 @@ public:
 	void UpdateEnemy();
 	void UpdateNetBombs();
 
-	bool IsServerStarted(){ return serverStarted; }
-	bool IsClient(){ return isClient; }
-	bool IsConnected(){ return isConnected; }
-	//ElfClientId GetClientId(){ return clientID; }
-	std::string GetStatus(){ return net_status; }
-	DWORD GetPing(){ return ping; }
+	bool IsServerStarted();
+	bool IsClient();
+	bool IsConnected();
+
+	std::string GetStatus();
+	DWORD GetPing();
 
 private:
 

@@ -1,3 +1,7 @@
+// ------------------------------------------------------------------
+// Open-bomber - open-source online bomberman remake
+// ------------------------------------------------------------------
+
 #include "Elf.h"
 #include "ElfExtra.h"
 #include <Windows.h>
@@ -47,6 +51,24 @@ Game::Game()
 	bombPlantId = 0;
 	bombsPlanted = 0;
 }
+//-----------------------------------------------------------------------------
+bool Game::IsPlayerDead(){ return playerDead;}
+//-----------------------------------------------------------------------------
+bool Game::IsEnemyDead(){ return enemyDead; }
+//-----------------------------------------------------------------------------
+void Game::SetEnemyDead(bool state){ enemyDead = state; }
+//-----------------------------------------------------------------------------
+bool Game::NeedRestart(){ return bSendRestart; }
+//-----------------------------------------------------------------------------
+void Game::NeedRestart(bool state){ bSendRestart = state; }
+//-----------------------------------------------------------------------------
+Dude Game::GetPlayer(){ return player; }
+//-----------------------------------------------------------------------------
+Dude Game::GetEnemy(){ return enemy; }
+//-----------------------------------------------------------------------------
+void Game::SetPlayer(Dude& newDude){ player = newDude; }
+//-----------------------------------------------------------------------------
+void Game::SetEnemy(Dude& newDude){ enemy = newDude; }
 //-----------------------------------------------------------------------------
 TBomb Game::GetBomb(int index)
 {
@@ -463,12 +485,12 @@ void Game::UpdateBombs(float dt)
 	//}
 }
 //-----------------------------------------------------------------------------
-bool Game::IsBombPlanted(int x, int y)
+bool Game::IsBombPlanted(int cx, int cy)
 {
 	for(int i=0; i<bombs.size(); i++)
 	{
 		if(!bombs[i].set) break; // no active bombs left
-		if(bombs[i].x == x && bombs[i].y == y)
+		if(bombs[i].cellx == cx && bombs[i].celly == cy)
 			return true;
 	}
 
@@ -477,14 +499,14 @@ bool Game::IsBombPlanted(int x, int y)
 //-----------------------------------------------------------------------------
 void Game::PlantBomb() // player plants a bomb
 {
-	if(IsBombPlanted(player.cellx*TILE_SZ, player.celly*TILE_SZ) == false)
+	if(IsBombPlanted(player.cellx, player.celly) == false)
 	{
 		TBomb b;
 
 		b.frame = 0;
 		b.set = true;
-		b.x = player.cellx*TILE_SZ;
-		b.y = player.celly*TILE_SZ;
+		//b.x = player.cellx;
+		//b.y = player.celly;
 		b.cellx = player.cellx;
 		b.celly = player.celly;
 		b.prevtime = 0;
@@ -513,7 +535,7 @@ void Game::DrawBombs()
 	{
 		if(!bombs[i].set) break;
 
-		sprite(bombs[i].x, bombs[i].y, bombtile, (bombs[i].frame+1)*t, 0, t, 1);
+		sprite(bombs[i].cellx*TILE_SZ, bombs[i].celly*TILE_SZ, bombtile, (bombs[i].frame+1)*t, 0, t, 1);
 	}
 
 	elfVideo_EnableBlending(false);
@@ -521,10 +543,10 @@ void Game::DrawBombs()
 //-----------------------------------------------------------------------------
 bool Game::CanMove(Dude& p, int dx, int dy)
 {
-	int next_cx = p.cellx+1;
-	int next_cy = p.celly+1;
-	int prev_cx = p.cellx-1;
-	int prev_cy = p.celly-1;
+	int next_cx = p.cellx+1; // next column
+	int next_cy = p.celly+1; // next row
+	int prev_cx = p.cellx-1; // prev column
+	int prev_cy = p.celly-1; // prev row
 
 	if(dx > 0 && !map->IsWalkable(next_cx, p.celly)) // moves to the right
 	{
@@ -546,7 +568,8 @@ bool Game::CanMove(Dude& p, int dx, int dy)
 			return false; // cant move, overlaps
 		}
 	}
-	else if(dy > 0 && !map->IsWalkable(p.cellx, next_cy))
+	
+	if(dy > 0 && !map->IsWalkable(p.cellx, next_cy))
 	{
 		// test y overlap
 		int yover = p.y+TILE_SZ;
@@ -1025,4 +1048,7 @@ void Game::GameShutdown()
 		net->StopServer();
 	if(net->IsClient())
 		net->ClientDisconnect();
+
+	delete net;
+	delete map;
 }

@@ -1,3 +1,7 @@
+// ------------------------------------------------------------------
+// Open-bomber - open-source online bomberman remake
+// ------------------------------------------------------------------
+
 #include "map.h"
 #include "game.h"
 #include <cassert>
@@ -86,7 +90,7 @@ bool Map::IsWalkable(int x, int y)
 	assert(y>=0);
 	assert(x < MAP_X);
 	assert(y < MAP_Y);
-	return (map[y*MAP_X + x] == WALKABLE && game->IsBombPlanted(x*TILE_SZ, y*TILE_SZ) == false);
+	return (map[y*MAP_X + x] == WALKABLE && game->IsBombPlanted(x, y) == false);
 }
 //-----------------------------------------------------------------------------
 bool Map::IsDestructible(int x, int y)
