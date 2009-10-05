@@ -1,3 +1,7 @@
+// ------------------------------------------------------------------
+// Open-bomber - open-source online bomberman remake
+// ------------------------------------------------------------------
+
 #pragma once
 
 #include "Raknet/include/RakNetworkFactory.h"

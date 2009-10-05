@@ -1,3 +1,7 @@
+// ------------------------------------------------------------------
+// Open-bomber - open-source online bomberman remake
+// ------------------------------------------------------------------
+
 #pragma once
 
 #include <map>
@@ -7,50 +11,52 @@
 //////////////////////////////////////////////////////////////////////////
 // textures
 //////////////////////////////////////////////////////////////////////////
-#define LAND_TILES 2
-#define FONT_SZ 16
-#define FONT_SHIFT 8
+#define LAND_TILES 2  // number of possible land tiles
+#define FONT_SZ 16    // default font size
+#define FONT_SHIFT 8  // default gap between font chars
 
 //-----------------------------------------------------------------------------
 // meniu
 //-----------------------------------------------------------------------------
-#define MENIU_MAIN 0
+// meniu states
+#define MENIU_MAIN 0        
 #define MENIU_SERVER_WAITING 1
 #define MENIU_ENTER_IP 2
 #define MENIU_PLAYING 3
 
-// title
+// title - screen parameters
 #define SCREENW 640
 #define SCREENH 480
 #define TITLEW 512
 #define TITLEH 256
 
 // title buttons
-#define MAIN_MENIU_NUMBTN 3 // numbuttons
-#define BTN_LAUNCH_SERVER 0
+#define MAIN_MENIU_NUMBTN 3 // number of buttons in main meniu
+#define BTN_LAUNCH_SERVER 0 
 #define BTN_JOIN 1
 #define BTN_EXIT 2
 
 //////////////////////////////////////////////////////////////////////////
 // bomberman
 //////////////////////////////////////////////////////////////////////////
-// walk types
-#define DUDE_DOWN 0
+// walk types & their respective frames in texture file
+#define DUDE_DOWN 0  
 #define DUDE_LEFT 3
 #define DUDE_RIGHT 6
 #define DUDE_UP 9
 #define DUDE_STAND 1
 
-#define DUDE_FRAME_TICK 0.2f
-#define NUM_DUDES 20 // animation tiles
-#define TICK_INTERVAL 200
-#define DEAD_INTERVAL 1000
+#define DUDE_FRAME_TICK 0.2f // walk frame change time
+#define NUM_DUDES 20         // number of walk animation tiles
+#define TICK_INTERVAL 200    // b-man death animation speed flips visiblity every 0.2s
+#define DEAD_INTERVAL 1000   // b-man death animation blink time 1.0s 
 
 struct Dude{
 	int frame; // current animation frame
 	int walk;  // walk type
 	int x, y;  // current position
-	int cellx, celly; // current cell
+	int cellx, // current cell column
+		celly; // current cell row
 };
 
 
@@ -58,37 +64,45 @@ struct Dude{
 //////////////////////////////////////////////////////////////////////////
 // bombs
 //////////////////////////////////////////////////////////////////////////
-#define MAX_BOMBS 5
-#define BOMB_FRAMES 3
-#define BOMB_DEAD_TIME 5.0f
-#define BOMB_TICK (5.0f/(5*3))
-#define BOMB_PLAYER 0
-#define BOMB_ENEMY 1
+#define MAX_BOMBS 5            // maximum number of bombs a b-man can place
+#define BOMB_FRAMES 3          // number of frames in a bomb texture
+#define BOMB_DEAD_TIME 5.0f    // time until bomb explodes
+#define BOMB_TICK (BOMB_DEAD_TIME/(5*3)) //bomb pulse speed in seconds
+#define BOMB_PLAYER 0          // bomb flag which shows that a bomb belongs to this player
+#define BOMB_ENEMY 1           // bomb flag which shows that a bomb belongs to enemy player
 
 struct TBomb{
-	bool set;
-	int x, y, cellx, celly;
-	float time;
-	float prevtime;
-	int frame;
-	unsigned int id;
-	int owner; // 0 - player, 1- enemy
+	bool set;         // true if the bomb is active
+	int cellx,        // current cell column
+		celly;        // current cell row
+	float time;       // bomb timer
+	float prevtime;   // previous frame time (needed for elapsed time calc)
+	int frame;        // current frame in texture
+	unsigned int id;  // unique bomb identifier
+	int owner;        // flag which denotes owner of the bomb
 };
 
 //////////////////////////////////////////////////////////////////////////
 // explosions
 //////////////////////////////////////////////////////////////////////////
-#define MAX_EXPLO MAX_BOMBS
-#define EXPLO_FRAMES 5
-#define EXPLO_TICK 0.1f
+#define MAX_EXPLO MAX_BOMBS  // maximum number of explosions visible
+#define EXPLO_FRAMES 5       // number of explosion frames in the texture
+#define EXPLO_TICK 0.1f      // explosion frame change time
 
 struct TExplosion{
-	int frame;
-	int x, y, cellx, celly;
-	int sx, sy;
-	float time;
-	float u, v, du, dv; // texture coords
-	bool set;
+	int frame;               // current explosion frame
+	int x,                   // top left corner of the quad 
+		y,                   // top left corner of the quad
+		cellx,               // current center cell column
+		celly;               // current center cell row
+	int sx,                  // width in pixels 
+		sy;                  // height in pixels
+	float time;              // explosion life (time passed)
+	float u,                 // x texture coord of top left corner
+		  v,                 // y texture coord of top left corner
+		  du,                // one frame texture delta in x/u direction
+		  dv;                // one frame texture delta in y/v direction
+	bool set;                // set to true if the explosion is active
 };
 
 //-----------------------------------------------------------------------------
@@ -121,13 +135,13 @@ public:
 	void ResetGame();
 	
 	// state checking & map functions
-	bool IsBombPlanted(int x, int y);
+	bool IsBombPlanted(int cellx, int celly);
 	bool IsPlayerInside(int cellx, int celly);
-	bool IsPlayerDead(){ return playerDead;}
-	bool IsEnemyDead(){ return enemyDead; }
-	void SetEnemyDead(bool state){ enemyDead = state; }
-	bool NeedRestart(){ return bSendRestart; }
-	void NeedRestart(bool state){ bSendRestart = state; }
+	bool IsPlayerDead();
+	bool IsEnemyDead();
+	void SetEnemyDead(bool state);
+	bool NeedRestart();
+	void NeedRestart(bool state);
 	bool CanMove(Dude& p, int dx, int dy);
 	
 	Map* GetMap();
@@ -163,10 +177,10 @@ public:
 	void GameRender();
 
 	// getters/setters
-	Dude GetPlayer(){ return player; }
-	Dude GetEnemy(){ return enemy; }
-	void SetPlayer(Dude& newDude){ player = newDude; }
-	void SetEnemy(Dude& newDude){ enemy = newDude; }
+	Dude GetPlayer();
+	Dude GetEnemy();
+	void SetPlayer(Dude& newDude);
+	void SetEnemy(Dude& newDude);
 
 private:
 
@@ -182,12 +196,12 @@ private:
 	Map* map;
 	Network* net;
 
-	// bombs
+	// bombs array
 	unsigned int bombPlantId;
 	std::vector<TBomb> bombs;
 	int bombsPlanted;
 
-	// explosions
+	// explosions array
 	std::vector<TExplosion> explo;
 
 	

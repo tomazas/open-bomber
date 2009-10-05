@@ -1,3 +1,7 @@
+// ------------------------------------------------------------------
+// Open-bomber - open-source online bomberman remake
+// ------------------------------------------------------------------
+
 #include "Elf.h"
 #include "ElfExtra.h"
 #include "game.h"

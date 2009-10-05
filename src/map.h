@@ -1,3 +1,7 @@
+// ------------------------------------------------------------------
+// Open-bomber - open-source online bomberman remake
+// ------------------------------------------------------------------
+
 #pragma once
 
 #include <string>
@@ -5,11 +9,11 @@
 //////////////////////////////////////////////////////////////////////////
 // map
 //////////////////////////////////////////////////////////////////////////
-#define TILE_SZ 32
-#define MAP_X 20
-#define MAP_Y 10
-#define WALKABLE ' '
-#define DESTRUCTIBLE '1'
+#define TILE_SZ 32          // tile size in pixels
+#define MAP_X 20            // number of columns in the map
+#define MAP_Y 10            // number of rows in the map
+#define WALKABLE ' '        // denotes a walkable tile in map
+#define DESTRUCTIBLE '1'    // denotes a destructible tile in map
 
 class Map{
 public:
@@ -17,17 +21,29 @@ public:
 	Map();
 	~Map();
 
+	// loads a map from file
 	bool Load(const char* name);
 
-	void Reset(); // rebuilds walls & etc., to start state
+	// rebuilds walls & etc., to start state
+	void Reset(); 
 
-	bool IsWalkable(int x, int y);
-	bool IsDestructible(int x, int y);
-	void MapSet(int x, int y, char c);
+	// returns true if the cell is walkable
+	bool IsWalkable(int cellx, int celly); 
+	// returns true if the cell is destructible
+	bool IsDestructible(int cellx, int celly); 
 
-	char Get(int x, int y);
+	// sets cell type
+	void MapSet(int cellx, int celly, char c);
+	 // returns cell type
+	char Get(int cellx, int celly);
+
+	// returns starting position of player in map
 	int* GetPlayerPos();
+	// returns starting position of enemy in map
 	int* GetEnemyPos();
+
+	// returns the loaded map file name 
+	std::string GetFileName(){ return mapname; }
 
 private:
 
