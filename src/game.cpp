@@ -278,7 +278,7 @@ void Game::sprite(int x, int y, int w, int h, int id, float s, float t, float s2
 //-----------------------------------------------------------------------------
 bool Game::IsPlayerInside(int cellx, int celly)
 {
-	// get cell coords
+	// get cell center coords
 	int x = cellx * TILE_SZ + TILE_SZ/2;
 	int y = celly * TILE_SZ + TILE_SZ/2;
 
@@ -300,86 +300,66 @@ bool Game::IsPlayerInside(int cellx, int celly)
 //-----------------------------------------------------------------------------
 void Game::Explode(int cx, int cy)
 {
-	//assert(numexplo+1 <= MAX_EXPLO); // error
-	const float tv = 1.0f/5.0f;
-
+	// create explosion animation at position
 	TExplosion e;
 	e.frame = 0;
-	e.x = cx*TILE_SZ - 2*TILE_SZ;
-	e.y = cy*TILE_SZ - 2*TILE_SZ;
-	e.sx = 5 * TILE_SZ; // width
-	e.sy = 5 * TILE_SZ; // height
 	e.cellx = cx;
 	e.celly = cy;
 	e.time = 0;
-	e.set = true;
+	e.set = true; // is active
+	memset(e.parts, 0, sizeof(e.parts));
 
-	// coords
-	e.u = 0;
-	e.v = 0;
-	e.du = 1.0f;
-	e.dv = 1.0f;
+	struct check_info{
+		check_info(){}
+		check_info(int cx, int cy, bool v):cx(cx),cy(cy),valid(v){}
 
-	// find all tiles to remove, two for each side
-	int startx = cx;// + 2;
-	int starty = cy;// + 2;
+		int cx, cy; // which cell to check
+		bool valid; // if true - this cell is in the map
+	}
+	cell_check[EXPLO_PARTS];
+	
+	cell_check[PART_CENTER] = check_info(cx, cy, true); // current cell
 
-	// explosion passes to fist tile if: next tile is empty(walkable) or is destructible
-	// explosions passes to the second tile if: it is destructible
+	cell_check[PART_RIGHT]  = check_info(cx+1, cy, cx+1 < MAP_X); // x+1
+	cell_check[PART_LEFT]   = check_info(cx-1, cy, cx-1 >= 0);    // x-1
+	cell_check[PART_UP]     = check_info(cx, cy-1, cy-1 >= 0);    // y-1
+	cell_check[PART_DOWN]   = check_info(cx, cy+1, cy+1 < MAP_Y); // y+1
 
-	// check if the flames reach the player bomberman
-	if(IsPlayerInside(startx, starty) && !playerDead)
+	cell_check[PART_RIGHT2] = check_info(cx+2, cy, cx+2 < MAP_X); // x+2
+	cell_check[PART_LEFT2]  = check_info(cx-2, cy, cx-2 >= 0);    // x-2
+	cell_check[PART_UP2]    = check_info(cx, cy-2, cy-2 >= 0);    // y-2
+	cell_check[PART_DOWN2]  = check_info(cx, cy+2, cy+2 < MAP_Y); // y+72
+
+	// explosion passes if next tile is empty(walkable) or is destructible
+
+	for(int i=0; i<EXPLO_PARTS; i++)
 	{
-		playerDead = true;
-		deadTime = timeGetTime();
-	}
+		if(cell_check[i].valid == false) // cant check non-valid cell
+			continue;
 
-	if((map->IsDestructible(startx+1, starty) || map->IsWalkable(startx+1, starty)) && startx+1 < MAP_X){ // x+1
-		map->MapSet(startx+1, starty, WALKABLE);
-		//if(IsDestructible(startx+2, starty) && startx+2 < MAP_X) // x+2
-		//	MapSet(startx+2, starty, WALKABLE);
-
-		if(IsPlayerInside(startx+1, starty) && !playerDead)
+		if(map->IsDestructible(cell_check[i].cx, cell_check[i].cy) || 
+			map->IsWalkable(cell_check[i].cx, cell_check[i].cy) || i == 0) // i=0 self bomb pos
 		{
-			playerDead = true;
-			deadTime = timeGetTime();
+
+			bool isFurther = i >= 5; // this is false for the closest cells
+			bool obstructed = isFurther && !e.parts[i-4];
+
+			// prevent flames going through a wall if the first cell obstructs it
+			if( obstructed == false ) 
+			{
+				map->MapSet(cell_check[i].cx, cell_check[i].cy, WALKABLE); // this cell was cleared from explosion
+
+				e.parts[i] = true; // draw this part
+
+				// kill player if he's in flames
+				if(IsPlayerInside(cell_check[i].cx, cell_check[i].cy) && !playerDead)
+				{
+					playerDead = true;
+					deadTime = timeGetTime();
+				}
+			}
 		}
-	}
 
-	if((map->IsDestructible(startx-1, starty) || map->IsWalkable(startx-1, starty)) && startx-1 >= 0){ // x-1
-		map->MapSet(startx-1, starty, WALKABLE);
-		//if(IsDestructible(startx-2, starty) && startx-2 >= 0) // x-2
-		//	MapSet(startx-2, starty, WALKABLE);
-
-		if(IsPlayerInside(startx-1, starty)&& !playerDead)
-		{
-			playerDead = true;
-			deadTime = timeGetTime();
-		}
-	}
-
-	if((map->IsDestructible(startx, starty+1) || map->IsWalkable(startx, starty+1)) && starty+1 < MAP_Y){ // y+1
-		map->MapSet(startx, starty+1, WALKABLE);
-		//if(IsDestructible(startx, starty+2) && starty+2 < MAP_Y) // y+2
-		//	MapSet(startx, starty+2, WALKABLE);
-
-		if(IsPlayerInside(startx, starty+1) && !playerDead)
-		{
-			playerDead = true;
-			deadTime = timeGetTime();
-		}
-	}
-
-	if((map->IsDestructible(startx, starty-1) || map->IsWalkable(startx, starty-1)) && starty-1 >= 0){ // y-1
-		map->MapSet(startx, starty-1, WALKABLE);
-		//if(IsDestructible(startx, starty-2) && starty-2 >= 0) // y-2
-		//	MapSet(startx, starty-2, WALKABLE);
-
-		if(IsPlayerInside(startx, starty-1) && !playerDead)
-		{
-			playerDead = true;
-			deadTime = timeGetTime();
-		}
 	}
 
 	explo.push_back(e);
@@ -412,13 +392,63 @@ void Game::DrawExplosions()
 	elfVideo_EnableBlending(true);
 	elfVideo_SetBlendMode(ElfBM_SrcAlpha, ElfBM_InvSrcAlpha);
 
+	// some textcoord constants 5x5 tiles makes one flame
+	const float t15 = 1.0f/5.0f;
+	const float t25 = 2.0f/5.0f;
+	const float t35 = 3.0f/5.0f;
+	const float t45 = 4.0f/5.0f;
+
+	struct pInfo{
+
+		pInfo(){}
+
+		// simple constructor
+		pInfo(int sx, int sy, float u, float v, float du, float dv):
+			sx(sx),sy(sy),u(u),v(v),du(du),dv(dv){}
+
+		int sx, sy;             // shift in cels/rows from center cell to find the required cell
+		float u,v,du,dv;        // rect texture coords
+
+	}part_info[EXPLO_PARTS];
+
+	// fill the info
+	part_info[PART_CENTER] = pInfo(0, 0, t25, t25, t35, t35); // center cell
+
+	part_info[PART_RIGHT]  = pInfo( 1,  0, t35, t25, t45, t35); // x+1
+	part_info[PART_UP]     = pInfo( 0, -1, t25, t15, t35, t25); // y-1
+	part_info[PART_LEFT]   = pInfo(-1,  0, t15, t25, t25, t35); // x-1
+	part_info[PART_DOWN]   = pInfo( 0,  1, t25, t35, t35, t45); // y+1
+
+	part_info[PART_RIGHT2] = pInfo( 2,  0, t45, t25, 1.0f, t35); // x+2
+	part_info[PART_UP2]    = pInfo( 0, -2, t25, 0.0f, t35, t15); // y-2
+	part_info[PART_LEFT2]  = pInfo(-2,  0, 0.0f, t25, t15, t35); // x-2
+	part_info[PART_DOWN2]  = pInfo( 0,  2, t25, t45, t35, 1.0f); // y+2
+
+	// now draw the parts
 	for (int i=0; i<explo.size(); i++)
 	{
 		if(!explo[i].set) break;
 
-		sprite(explo[i].x, explo[i].y, 
-				explo[i].sx, explo[i].sy, explotile, 
-				explo[i].frame*t + explo[i].u, explo[i].v, explo[i].du*t, explo[i].dv);
+		for(int j=0; j<EXPLO_PARTS; j++)
+		{
+			if(explo[i].parts[j] == false) continue; // dont draw this part
+
+			// find cell position(in pixels) by adding shifts
+			int x = (explo[i].cellx + part_info[j].sx) * TILE_SZ; 
+			int y = (explo[i].celly + part_info[j].sy) * TILE_SZ; 
+
+			float u_start = explo[i].frame*t;
+			//float u_end = (explo[i].frame+1)*t;
+			//float range_u = u_end - u_start;
+
+			float u  = u_start + t * part_info[j].u;
+			float u2 = u_start + t * part_info[j].du - u;
+			float v = part_info[j].v;
+			float v2 = part_info[j].dv - v;
+
+			// draw
+			sprite(x, y, TILE_SZ, TILE_SZ, explotile, u, v, u2, v2);
+		}
 	}
 
 	elfVideo_EnableBlending(false);
@@ -677,11 +707,11 @@ void Game::DrawMap()
 		{
 			switch( map->Get(j,i) )
 			{
-				case '0': // solid indestructible wall
+				case WALL: // solid indestructible wall
 					sprite(j*TILE_SZ, i*TILE_SZ, landTiles[0], 0, 0, 1, 1);
 					break;
 
-				case '1': // destructible bricks
+				case DESTRUCTIBLE: // destructible bricks
 					sprite(j*TILE_SZ, i*TILE_SZ, landTiles[1], 0, 0, 1, 1);
 					break;
 
@@ -1019,10 +1049,13 @@ void Game::GameRender()
 		else
 			FontPrint(10, 380, "This machine is: NONE");
 
-		FontPrint(10, 400, "NetStatus: %s", net->GetStatus().c_str());
-		FontPrint(10, 420, "ping: %d", net->GetPing());
-		FontPrint(10, 440, "bombs: %d", bombs.size());
-		FontPrint(10, 460, "explosions: %d", explo.size());
+		int z = 0;
+#define nextrow 400+(z++)*20 
+		FontPrint(10, nextrow, "NetStatus: %s", net->GetStatus().c_str());
+		FontPrint(10, nextrow, "ping: %d", net->GetPing());
+		FontPrint(10, nextrow, "bombs: %d", bombs.size());
+		FontPrint(10, nextrow, "cellx: %d, celly: %d", player.cellx, player.celly);
+		//FontPrint(10, nextrow, "explosions: %d", explo.size());
 	}
 	else if(gamestate == MENIU_MAIN)
 	{

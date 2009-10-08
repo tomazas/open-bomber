@@ -79,7 +79,7 @@ private:
 	bool serverStarted;
 	bool isClient;
 	bool isConnected;
-	//ElfClientId clientID;
+	
 	std::string net_status;
 
 	static DWORD ping;
