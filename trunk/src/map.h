@@ -12,6 +12,7 @@
 #define TILE_SZ 32          // tile size in pixels
 #define MAP_X 20            // number of columns in the map
 #define MAP_Y 10            // number of rows in the map
+#define WALL '0'            // denotes a inpassable wall
 #define WALKABLE ' '        // denotes a walkable tile in map
 #define DESTRUCTIBLE '1'    // denotes a destructible tile in map
 

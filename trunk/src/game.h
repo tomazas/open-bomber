@@ -11,7 +11,7 @@
 //////////////////////////////////////////////////////////////////////////
 // textures
 //////////////////////////////////////////////////////////////////////////
-#define LAND_TILES 2  // number of possible land tiles
+#define LAND_TILES 3  // number of possible land tiles
 #define FONT_SZ 16    // default font size
 #define FONT_SHIFT 8  // default gap between font chars
 
@@ -89,19 +89,26 @@ struct TBomb{
 #define EXPLO_FRAMES 5       // number of explosion frames in the texture
 #define EXPLO_TICK 0.1f      // explosion frame change time
 
+enum{ // the explosion parts
+	PART_CENTER = 0, // currect cell where the bomb explodes
+	PART_RIGHT,
+	PART_UP,
+	PART_LEFT,
+	PART_DOWN,
+	PART_RIGHT2,
+	PART_UP2,
+	PART_LEFT2,
+	PART_DOWN2,
+
+	EXPLO_PARTS // do not move!  number of total explosion parts
+};
+
 struct TExplosion{
 	int frame;               // current explosion frame
-	int x,                   // top left corner of the quad 
-		y,                   // top left corner of the quad
-		cellx,               // current center cell column
+	int cellx,               // current center cell column
 		celly;               // current center cell row
-	int sx,                  // width in pixels 
-		sy;                  // height in pixels
 	float time;              // explosion life (time passed)
-	float u,                 // x texture coord of top left corner
-		  v,                 // y texture coord of top left corner
-		  du,                // one frame texture delta in x/u direction
-		  dv;                // one frame texture delta in y/v direction
+	bool parts[EXPLO_PARTS]; // parts of explosion, if true - this part should be drawn
 	bool set;                // set to true if the explosion is active
 };
 
@@ -148,8 +155,8 @@ public:
 	Network* GetNetwork();
 	
 	// drawing sprites
-	void sprite(int x, int y, int id, float s, float t, float s2, float t2);
-	void sprite(int x, int y, int w, int h, int id, float s, float t, float s2, float t2);
+	void sprite(int x, int y, int id, float s, float t, float ds, float dt);
+	void sprite(int x, int y, int w, int h, int id, float s, float t, float ds, float dt);
 	
 	// game fx
 	void Explode(int cx, int cy);
